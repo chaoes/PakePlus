@@ -1,97 +1,99 @@
-const { invoke } = window.__TAURI__.core
-const { WebviewWindow } = window.__TAURI__.webviewWindow
+console.clear();
 
-let inputValue
-let resultElement
+// 本地:
+const sound = new Howl({src: ['./assets/sound.mp3']});
+const bgm = new Howl({src: ['./assets/bgm.mp3'], html5:true, loop: true, volume: 0.2});
 
-window.addEventListener('DOMContentLoaded', () => {
-    inputValue = document.querySelector('#inputValue').value
-    resultElement = document.querySelector('#result')
-    // open url
-    document.querySelector('#openUrl').addEventListener('click', async (e) => {
-        e.preventDefault()
-        console.log('open url')
-        await invoke('open_url', {
-            url: inputValue ? inputValue : 'https://juejin.cn/',
-        })
+// 网络:
+// const sound = new Howl({
+//     src: [
+//         "https://github.com/liuxiyuan-2022/EWoodenFish/blob/main/src/assets/sound.mp3?raw=true",
+//     ],
+// });
+// const bgm = new Howl({
+//     src: [
+//         "https://github.com/liuxiyuan-2022/EWoodenFish/blob/main/src/assets/bgm.mp3?raw=true",
+//     ],
+//     html5: true,
+//     loop: true,
+//     volume: 0.2,
+// });
+
+var ringId = 0;
+var bgmId = 0;
+let count = 0;
+let countFlag = false;
+
+function startAnimate() {
+    $(".count").css("transform", "scale(1.1)");
+    $(".woodenfish").css('transform', 'scale(.99)');
+}
+
+function initAnimate() {
+    $(".count").css("transform", "scale(1)");
+    $(".woodenfish").css('transform', 'scale(1)');
+}
+
+function counter() {
+    countFlag = true;
+    count++;
+    $(".count").html(count);
+    startAnimate();
+    if (ringId != 0) {
+        if (sound.playing()) {
+            sound.stop(ringId);
+        }
+        sound.play(ringId);
+    } else {
+        ringId = sound.play();
+    }
+}
+
+$(document).keydown(function (e) {
+    if (e.key == " " && e) {
+        if (!countFlag) {
+            counter();
+        }
+    }
+});
+
+$(document).keyup(function (e) {
+    if (e.key == " " && e) {
+        countFlag = false;
+        initAnimate();
+    }
+});
+
+if (typeof window.orientation !== 'undefined') {
+    $(".woodenfish").on('touchstart',function(e) {
+        counter();
     })
-    // run command
-    document
-        .querySelector('#runCommand')
-        .addEventListener('click', async (e) => {
-            e.preventDefault()
-            console.log('run command')
-            const result = await invoke('run_command', {
-                command: inputValue ? inputValue : 'node -v',
-            })
-            console.log('result', result)
-            resultElement.textContent = result
-        })
-    // download file
-    document
-        .querySelector('#downloadFile')
-        .addEventListener('click', async (e) => {
-            e.preventDefault()
-            console.log('download file')
-            const result = await invoke('download_file', {
-                url: inputValue
-                    ? inputValue
-                    : 'https://gh-proxy.com/github.com/Sjj1024/PakePlus/releases/latest/download/PakePlus_0.5.30_x64-setup.exe',
-                savePath: '',
-                fileId: '1111',
-            })
-            console.log('result', result)
-            resultElement.textContent = result
-        })
-    // get exe dir
-    document
-        .querySelector('#getExeDir')
-        .addEventListener('click', async (e) => {
-            e.preventDefault()
-            console.log('get exe dir')
-            const result = await invoke('get_exe_dir')
-            console.log('result', result)
-            resultElement.textContent = result
-        })
-    // get env var
-    document
-        .querySelector('#getEnvVar')
-        .addEventListener('click', async (e) => {
-            e.preventDefault()
-            console.log('get env var')
-            const result = await invoke('get_env_var', {
-                name: inputValue ? inputValue : 'PATH',
-            })
-            console.log('result', result)
-            resultElement.textContent = result
-        })
-    // find port
-    document.querySelector('#findPort').addEventListener('click', async (e) => {
-        e.preventDefault()
-        console.log('find port')
-        const result = await invoke('find_port')
-        console.log('result', result)
-        resultElement.textContent = result
-    })
-    // open url new
-    document
-        .querySelector('#openUrlNew')
-        .addEventListener('click', async (e) => {
-            e.preventDefault()
-            console.log('open url new')
-            const webview = new WebviewWindow('my-label', {
-                url: inputValue ? inputValue : 'https://pakeplus.com/',
-                center: true,
-                width: 800,
-                height: 400,
-                focus: true,
-                title: 'PakePlus Window',
-            })
-            webview.once('tauri://created', function () {
-                console.log('new webview created')
-            })
-            webview.once('tauri://error', function (e) {
-                console.log('new webview error', e)
-            })
-        })
-})
+    
+    $(".woodenfish").on('touchmove',function(e) {
+        initAnimate();
+    });
+    
+    $(".woodenfish").on('touchend',function(e) {
+        initAnimate();
+    });
+}else{
+    $(".woodenfish").mouseup(function () {
+        initAnimate();
+    });
+    
+    $(".woodenfish").mousedown(function () {
+        counter();
+    });
+}
+
+$(".logo").click(function (e) {
+    if (bgm.playing() && bgm.state().toString() == "loaded") {
+        bgm.pause(bgmId);
+    } else {
+        if (bgmId != 0) {
+            bgm.play(bgmId);
+        } else {
+            bgmId = bgm.play();
+        }
+    }
+});
